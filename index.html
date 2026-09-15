@@ -1,66 +1,159 @@
 <!doctype html>
 <html lang="fr">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0b0f14"><link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="icon-192.png">
-<title>PulseTrack</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0f14">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>PulseTrack V2.1</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#0b0f14;color:#f4f7fb;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",Arial,sans-serif}
-.app{max-width:520px;margin:auto;padding:16px 16px 90px}.top{display:flex;justify-content:space-between;align-items:center;margin:8px 0 20px}.brand{font-size:25px;font-weight:800}.date{font-size:13px;color:#8f9aaa}
+.app{max-width:540px;margin:auto;padding:16px 16px 92px}.top{display:flex;justify-content:space-between;align-items:center;margin:8px 0 20px}.brand{font-size:25px;font-weight:800}.date{font-size:13px;color:#8f9aaa}
 .page{display:none}.page.active{display:block}.card{background:#121922;border:1px solid #202a35;border-radius:18px;padding:16px;margin-bottom:12px}
 .hero{display:flex;align-items:center;gap:16px}.score{width:96px;height:96px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(#67e8a5 0 78%,#29343f 78%);position:relative}.score:after{content:"";position:absolute;inset:7px;background:#121922;border-radius:50%}.score b{position:relative;z-index:1;font-size:29px}.score small{position:absolute;z-index:1;margin-top:54px;font-size:10px;color:#9aa5b4}
 h2{font-size:18px;margin:2px 0 5px}h3{font-size:15px;margin:0 0 12px}.muted{color:#8f9aaa;font-size:13px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{background:#0d131a;border-radius:13px;padding:12px}.metric b{font-size:20px;display:block;margin-top:4px}.metric span{font-size:11px;color:#8995a5}
 .row{display:flex;justify-content:space-between;align-items:center;margin:9px 0}.pill{padding:5px 9px;border-radius:20px;background:#193126;color:#78e5aa;font-size:11px}
-input,select{width:100%;background:#0d131a;color:#fff;border:1px solid #283440;border-radius:11px;padding:11px;font-size:14px;margin-top:5px}.field{margin-bottom:10px}.field label{font-size:12px;color:#9aa5b4}
-button.primary{width:100%;border:0;border-radius:12px;padding:13px;background:#f4f7fb;color:#0b0f14;font-weight:750;font-size:15px}button.secondary{border:1px solid #33404d;background:#121922;color:#fff;border-radius:10px;padding:9px 11px}
+input,select,textarea{width:100%;background:#0d131a;color:#fff;border:1px solid #283440;border-radius:11px;padding:11px;font-size:14px;margin-top:5px}.field{margin-bottom:10px}.field label{font-size:12px;color:#9aa5b4}
+button.primary{width:100%;border:0;border-radius:12px;padding:13px;background:#f4f7fb;color:#0b0f14;font-weight:750;font-size:15px}button.secondary{border:1px solid #33404d;background:#121922;color:#fff;border-radius:10px;padding:10px 11px}button.danger{border:1px solid #5b2b2b;background:#211416;color:#ffb0b0;border-radius:10px;padding:10px 11px;width:100%}
 canvas{width:100%;height:175px;background:#0d131a;border-radius:13px}.nav{position:fixed;bottom:0;left:0;right:0;background:#111720;border-top:1px solid #26303b;display:flex;justify-content:center;z-index:5}.nav button{flex:1;max-width:130px;background:none;border:0;color:#8793a3;padding:11px 4px 9px;font-size:11px}.nav button.active{color:#fff}.nav span{display:block;font-size:20px;margin-bottom:3px}
-.small{font-size:12px}.empty{padding:18px;text-align:center;color:#7f8b9b}.danger{color:#ff9a9a}
-</style></head>
+.small{font-size:12px}.empty{padding:18px;text-align:center;color:#7f8b9b}.privacy{border-left:3px solid #67e8a5;padding-left:12px}.ok{color:#78e5aa}.warn{color:#ffd27d}.modal{position:fixed;inset:0;background:rgba(0,0,0,.78);display:none;align-items:center;justify-content:center;padding:20px;z-index:20}.modal.show{display:flex}.modalbox{max-width:480px;width:100%;background:#121922;border:1px solid #2a3541;border-radius:20px;padding:20px}.modalbox h2{margin-top:0}.modalbox button{margin-top:10px}
+</style>
+</head>
 <body>
-<div class="app">
+<div id="lock" class="modal show">
+  <div class="modalbox">
+    <h2>🔐 PulseTrack privé</h2>
+    <p class="muted" id="lockText">Choisis un code secret pour chiffrer les données stockées sur cet iPhone.</p>
+    <input id="pin" type="password" inputmode="numeric" minlength="6" placeholder="Code secret (6 caractères ou plus)">
+    <input id="pin2" type="password" inputmode="numeric" minlength="6" placeholder="Confirmer le code" style="display:none">
+    <button class="primary" id="unlockBtn">Créer le coffre local</button>
+    <p class="small muted">⚠️ Si tu oublies ce code, PulseTrack ne pourra pas récupérer les données chiffrées. Un export de secours chiffré est disponible dans Confidentialité.</p>
+  </div>
+</div>
+
+<div class="app" id="app" style="visibility:hidden">
 <div class="top"><div class="brand">PulseTrack</div><div class="date" id="today"></div></div>
 
 <section id="home" class="page active">
-<div class="card hero"><div class="score"><b id="score">—</b><small>/100</small></div><div><div class="muted">Récupération</div><h2 id="status">Ajoute tes données</h2><div class="muted">Le score est calculé à partir de sommeil, HRV, FC repos et ressenti.</div></div></div>
+<div class="card hero"><div class="score"><b id="score">—</b><small>/100</small></div><div><div class="muted">Récupération</div><h2 id="status">Ajoute tes données</h2><div class="muted">Score indicatif basé sur sommeil, HRV, FC repos et ressenti.</div></div></div>
 <div class="grid"><div class="metric"><span>Sommeil</span><b id="sleepV">—</b></div><div class="metric"><span>HRV</span><b id="hrvV">—</b></div><div class="metric"><span>FC repos</span><b id="rhrV">—</b></div><div class="metric"><span>Poids</span><b id="weightV">—</b></div></div>
 <div class="card"><div class="row"><h3>Dernière séance</h3><span class="pill" id="lastType">—</span></div><div class="row"><span class="muted" id="lastInfo">Aucune séance</span><b id="lastPace"></b></div><div class="row"><span class="muted">FC moyenne</span><b id="lastHr">—</b></div></div>
 <div class="card"><h3>Évolution du score</h3><canvas id="homeChart"></canvas></div>
 </section>
 
 <section id="health" class="page"><div class="card"><h3>Données du jour</h3>
-<div class="grid"><div class="field"><label>Sommeil (heures)</label><input id="sleep" type="number" step=".1" value="7.5"></div><div class="field"><label>HRV (ms)</label><input id="hrv" type="number" value="58"></div><div class="field"><label>FC repos (bpm)</label><input id="rhr" type="number" value="52"></div><div class="field"><label>Poids (kg)</label><input id="weight" type="number" step=".1" value="78.4"></div><div class="field"><label>Fatigue /10</label><input id="fatigue" type="number" min="0" max="10" value="3"></div><div class="field"><label>Énergie /10</label><input id="energy" type="number" min="0" max="10" value="7"></div><div class="field"><label>Stress /10</label><input id="stress" type="number" min="0" max="10" value="4"></div><div class="field"><label>SpO₂ (%)</label><input id="spo2" type="number" value="97"></div></div>
-<button class="primary" onclick="saveHealth()">Enregistrer</button></div></section>
+<div class="grid"><div class="field"><label>Sommeil (heures)</label><input id="sleep" type="number" step=".1"></div><div class="field"><label>HRV (ms)</label><input id="hrv" type="number"></div><div class="field"><label>FC repos (bpm)</label><input id="rhr" type="number"></div><div class="field"><label>Poids (kg)</label><input id="weight" type="number" step=".1"></div><div class="field"><label>Fatigue /10</label><input id="fatigue" type="number" min="0" max="10"></div><div class="field"><label>Énergie /10</label><input id="energy" type="number" min="0" max="10"></div><div class="field"><label>Stress /10</label><input id="stress" type="number" min="0" max="10"></div><div class="field"><label>SpO₂ (%)</label><input id="spo2" type="number"></div></div>
+<button class="primary" onclick="saveHealth()">Enregistrer</button></div>
+<div class="card"><h3>Principe de confidentialité</h3><div class="privacy muted">Les données saisies ici sont chiffrées avant stockage local. Elles ne sont pas enregistrées dans le dépôt GitHub.</div></div>
+</section>
 
 <section id="sport" class="page"><div class="card"><h3>Ajouter une séance</h3>
 <div class="field"><label>Type</label><select id="sportType"><option>Course</option><option>Musculation</option><option>Vélo</option><option>Autre</option></select></div>
-<div class="grid"><div class="field"><label>Distance (km)</label><input id="dist" type="number" step=".1" value="10"></div><div class="field"><label>Durée (min)</label><input id="duration" type="number" value="52"></div><div class="field"><label>FC moyenne</label><input id="sportHr" type="number" value="154"></div><div class="field"><label>FC max</label><input id="maxHr" type="number" value="172"></div><div class="field"><label>Dénivelé (m)</label><input id="elev" type="number" value="0"></div><div class="field"><label>Difficulté /10</label><input id="rpe" type="number" min="1" max="10" value="6"></div></div>
-<div class="field"><label>Note</label><input id="note" placeholder="Sensations, jambes, météo..."></div><button class="primary" onclick="saveSport()">Enregistrer la séance</button></div>
-<div class="card"><h3>Objectif 10 km</h3><div class="row"><span class="muted">Allure cible</span><b>5:00/km</b></div><div class="row"><span class="muted">Temps cible</span><b>50:00</b></div></div></section>
+<div class="grid"><div class="field"><label>Distance (km)</label><input id="dist" type="number" step=".1"></div><div class="field"><label>Durée (min)</label><input id="duration" type="number"></div><div class="field"><label>FC moyenne</label><input id="sportHr" type="number"></div><div class="field"><label>FC max</label><input id="maxHr" type="number"></div><div class="field"><label>Dénivelé (m)</label><input id="elev" type="number"></div><div class="field"><label>Difficulté /10</label><input id="rpe" type="number" min="1" max="10"></div></div>
+<div class="field"><label>Note</label><textarea id="note" rows="2" placeholder="Sensations, jambes, météo..."></textarea></div><button class="primary" onclick="saveSport()">Enregistrer la séance</button></div>
+<div class="card"><h3>Préparation V2.2</h3><p class="muted">Cette structure est prête à recevoir des données Apple Santé et Garmin sans mélanger leurs identifiants avec les données locales. Les connecteurs seront ajoutés dans la vraie app iOS.</p></div></section>
 
 <section id="trend" class="page"><div class="card"><h3>Évolution</h3><div class="row"><span class="muted">Historique</span><select id="period" onchange="refresh()"><option value="7">7 jours</option><option value="30">30 jours</option><option value="90">3 mois</option></select></div><canvas id="trendChart"></canvas></div>
 <div class="grid"><div class="metric"><span>Sommeil moyen</span><b id="avgSleep">—</b></div><div class="metric"><span>HRV moyenne</span><b id="avgHrv">—</b></div><div class="metric"><span>FC repos</span><b id="avgRhr">—</b></div><div class="metric"><span>Séances</span><b id="sessionCount">—</b></div></div>
 <div class="card"><h3>Analyse</h3><div id="analysis" class="muted">Ajoute plusieurs jours pour faire apparaître des tendances.</div></div>
-<div class="card"><button class="secondary" onclick="resetData()">Effacer toutes les données</button></div></section>
+<div class="card"><h3>Confidentialité & données</h3>
+<p class="muted">Stockage local chiffré avec AES-GCM dans le navigateur. Le code de chiffrement n'est pas envoyé à GitHub. Pour une protection renforcée, la V2.2 native utilisera le trousseau sécurisé iOS.</p>
+<div class="grid"><button class="secondary" onclick="exportBackup()">Exporter une sauvegarde chiffrée</button><button class="secondary" onclick="document.getElementById('importFile').click()">Importer</button></div>
+<input id="importFile" type="file" accept=".pulsetrack,.json" style="display:none" onchange="importBackup(this.files[0])">
+<br><button class="danger" onclick="resetData()">Effacer toutes les données</button></div>
+</section>
 </div>
+
 <div class="nav"><button class="active" onclick="show('home',this)"><span>⌂</span>Accueil</button><button onclick="show('health',this)"><span>♥</span>Santé</button><button onclick="show('sport',this)"><span>◉</span>Sport</button><button onclick="show('trend',this)"><span>↗</span>Évolution</button></div>
 
 <script>
-const $=id=>document.getElementById(id), KEY='pulsetrack_v1';
+const $=id=>document.getElementById(id);
+const META='pulsetrack_v21_meta', STORE='pulsetrack_v21_vault';
+let KEY=null, DB=[];
 $('today').textContent=new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'short'});
-function data(){return JSON.parse(localStorage.getItem(KEY)||'[]')}
-function save(a){localStorage.setItem(KEY,JSON.stringify(a))}
+
+function b64(buf){return btoa(String.fromCharCode(...new Uint8Array(buf)))}
+function unb64(s){return Uint8Array.from(atob(s),c=>c.charCodeAt(0))}
+async function derive(pin,salt){
+  const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:250000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+async function encrypt(obj,key=KEY){
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify(obj)));
+  return {iv:b64(iv),ct:b64(ct)};
+}
+async function decrypt(pack,key=KEY){
+  const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(pack.iv)},key,unb64(pack.ct));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+function meta(){return JSON.parse(localStorage.getItem(META)||'null')}
+async function saveVault(){
+  const pack=await encrypt(DB);
+  localStorage.setItem(STORE,JSON.stringify(pack));
+}
+async function unlock(){
+  const m=meta(), pin=$('pin').value;
+  if(!pin || pin.length<6){alert('Utilise au moins 6 caractères.');return}
+  if(!m){
+    const p2=$('pin2').value;
+    if(!$('pin2').style.display||$('pin2').style.display==='none') return;
+    if(pin!==p2){alert('Les deux codes sont différents.');return}
+    const salt=crypto.getRandomValues(new Uint8Array(16));
+    KEY=await derive(pin,salt);
+    localStorage.setItem(META,JSON.stringify({salt:b64(salt),v:1}));
+    DB=[];
+    await saveVault();
+  } else {
+    try{
+      KEY=await derive(pin,unb64(m.salt));
+      DB=await decrypt(JSON.parse(localStorage.getItem(STORE)));
+    }catch(e){alert('Code incorrect ou données chiffrées illisibles.');return}
+  }
+  $('lock').classList.remove('show');$('app').style.visibility='visible';refresh();
+}
+$('unlockBtn').onclick=unlock;
+if(!meta()){
+  $('pin2').style.display='block';
+  $('lockText').textContent='Crée un code secret. Il servira à chiffrer les données PulseTrack stockées sur cet iPhone.';
+  $('unlockBtn').textContent='Créer le coffre local';
+}else{
+  $('lockText').textContent='Déverrouille ton coffre PulseTrack.';
+  $('unlockBtn').textContent='Déverrouiller';
+}
+
 function score(x){return Math.max(0,Math.min(100,Math.round(50+x.sleep*4+x.hrv*.18+(60-x.rhr)*.8+(x.energy-5)*2-(x.fatigue-5)*2-(x.stress-5)*1.2)))}
-function saveHealth(){let x={type:'health',date:Date.now(),sleep:+$('sleep').value,hrv:+$('hrv').value,rhr:+$('rhr').value,weight:+$('weight').value,fatigue:+$('fatigue').value,energy:+$('energy').value,stress:+$('stress').value,spo2:+$('spo2').value};let a=data().filter(z=>!(z.type==='health'&&new Date(z.date).toDateString()===new Date().toDateString()));a.push(x);save(a);refresh();alert('Données de santé enregistrées.')}
-function saveSport(){let x={type:'sport',date:Date.now(),sport:$('sportType').value,dist:+$('dist').value,duration:+$('duration').value,hr:+$('sportHr').value,maxHr:+$('maxHr').value,elev:+$('elev').value,rpe:+$('rpe').value,note:$('note').value};let a=data();a.push(x);save(a);refresh();alert('Séance enregistrée.')}
+async function saveHealth(){let x={type:'health',date:Date.now(),sleep:+$('sleep').value,hrv:+$('hrv').value,rhr:+$('rhr').value,weight:+$('weight').value,fatigue:+$('fatigue').value,energy:+$('energy').value,stress:+$('stress').value,spo2:+$('spo2').value};DB=DB.filter(z=>!(z.type==='health'&&new Date(z.date).toDateString()===new Date().toDateString()));DB.push(x);await saveVault();refresh();alert('Données de santé enregistrées.')}
+async function saveSport(){let x={type:'sport',date:Date.now(),sport:$('sportType').value,dist:+$('dist').value,duration:+$('duration').value,hr:+$('sportHr').value,maxHr:+$('maxHr').value,elev:+$('elev').value,rpe:+$('rpe').value,note:$('note').value};DB.push(x);await saveVault();refresh();alert('Séance enregistrée.')}
 function show(id,b){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$(id).classList.add('active');document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');refresh()}
-function refresh(){let a=data(),h=a.filter(x=>x.type==='health').sort((a,b)=>a.date-b.date),s=a.filter(x=>x.type==='sport').sort((a,b)=>b.date-a.date),today=h.filter(x=>new Date(x.date).toDateString()===new Date().toDateString())[0];
-if(today){let sc=score(today);$('score').textContent=sc;$('sleepV').textContent=today.sleep.toFixed(1)+' h';$('hrvV').textContent=today.hrv+' ms';$('rhrV').textContent=today.rhr+' bpm';$('weightV').textContent=today.weight.toFixed(1)+' kg';$('status').textContent=sc>=75?'Bonne récupération':sc>=55?'Récupération moyenne':'Récupération faible'}
-if(s[0]){$('lastType').textContent=s[0].sport;$('lastInfo').textContent=s[0].dist+' km · '+s[0].duration+' min';$('lastHr').textContent=s[0].hr+' bpm';$('lastPace').textContent=s[0].sport==='Course'&&s[0].dist?formatPace(s[0].duration/s[0].dist):''}
-let n=h.length;let avg=k=>n?h.reduce((z,x)=>z+x[k],0)/n:0;$('avgSleep').textContent=n?avg('sleep').toFixed(1)+' h':'—';$('avgHrv').textContent=n?Math.round(avg('hrv'))+' ms':'—';$('avgRhr').textContent=n?Math.round(avg('rhr'))+' bpm':'—';$('sessionCount').textContent=s.length;
-if(n>=3){let first=h.slice(0,Math.ceil(n/2)),last=h.slice(Math.floor(n/2));let av=(q,k)=>q.reduce((z,x)=>z+x[k],0)/q.length;$('analysis').textContent=`Sur tes données enregistrées, le sommeil moyen est de ${av(h,'sleep').toFixed(1)} h et la HRV moyenne de ${Math.round(av(h,'hrv'))} ms. Compare ces indicateurs avec tes séances pour suivre ta récupération.`}else $('analysis').textContent='Ajoute au moins 3 jours de données pour faire apparaître des tendances.';draw('homeChart',h.map(x=>score(x)));draw('trendChart',h.map(x=>score(x)))}
+function refresh(){
+ let a=DB,h=a.filter(x=>x.type==='health').sort((a,b)=>a.date-b.date),s=a.filter(x=>x.type==='sport').sort((a,b)=>b.date-a.date),today=h.find(x=>new Date(x.date).toDateString()===new Date().toDateString());
+ if(today){let sc=score(today);$('score').textContent=sc;$('sleepV').textContent=today.sleep.toFixed(1)+' h';$('hrvV').textContent=today.hrv+' ms';$('rhrV').textContent=today.rhr+' bpm';$('weightV').textContent=today.weight.toFixed(1)+' kg';$('status').textContent=sc>=75?'Bonne récupération':sc>=55?'Récupération moyenne':'Récupération faible'}
+ if(s[0]){$('lastType').textContent=s[0].sport;$('lastInfo').textContent=(s[0].dist||0)+' km · '+s[0].duration+' min';$('lastHr').textContent=(s[0].hr||'—')+' bpm';$('lastPace').textContent=s[0].sport==='Course'&&s[0].dist?formatPace(s[0].duration/s[0].dist):''}
+ let n=h.length,avg=k=>n?h.reduce((z,x)=>z+x[k],0)/n:0;
+ $('avgSleep').textContent=n?avg('sleep').toFixed(1)+' h':'—';$('avgHrv').textContent=n?Math.round(avg('hrv'))+' ms':'—';$('avgRhr').textContent=n?Math.round(avg('rhr'))+' bpm':'—';$('sessionCount').textContent=s.length;
+ $('analysis').textContent=n>=3?`Sur les ${n} jours enregistrés : sommeil moyen ${avg('sleep').toFixed(1)} h, HRV moyenne ${Math.round(avg('hrv'))} ms et FC repos moyenne ${Math.round(avg('rhr'))} bpm. Cette analyse est descriptive et ne constitue pas un avis médical.`:'Ajoute au moins 3 jours de données pour faire apparaître des tendances.';
+ draw('homeChart',h.slice(-30).map(x=>score(x)));draw('trendChart',h.slice(-parseInt($('period').value||30)).map(x=>score(x)));
+}
 function formatPace(v){let m=Math.floor(v),sec=Math.round((v-m)*60);return m+':'+String(sec).padStart(2,'0')+'/km'}
 function draw(id,vals){let c=$(id),r=c.getBoundingClientRect(),d=devicePixelRatio||1;c.width=r.width*d;c.height=175*d;let x=c.getContext('2d');x.scale(d,d);x.strokeStyle='#67e8a5';x.lineWidth=2;x.beginPath();if(!vals.length){x.stroke();return}vals.forEach((v,i)=>{let px=10+i*(r.width-20)/Math.max(1,vals.length-1),py=155-(v/100)*130;i?x.lineTo(px,py):x.moveTo(px,py)});x.stroke()}
-function resetData(){if(confirm('Effacer toutes les données PulseTrack ?')){localStorage.removeItem(KEY);refresh()}}
-window.addEventListener('resize',refresh);refresh();
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
-</script></body></html>
+async function exportBackup(){
+ if(!KEY){return}
+ const pass=prompt('Code secret actuel pour confirmer l’export :'); if(!pass)return;
+ try{await derive(pass,unb64(meta().salt));}catch(e){alert('Code incorrect.');return}
+ const pack=await encrypt(DB);const blob=new Blob([JSON.stringify({format:'PulseTrack encrypted backup',version:1,...pack})],{type:'application/octet-stream'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='pulsetrack-backup.pulsetrack';a.click();URL.revokeObjectURL(a.href);
+}
+async function importBackup(file){
+ if(!file)return;try{
+  const obj=JSON.parse(await file.text()),pass=prompt('Entre le code secret utilisé pour cette sauvegarde :');if(!pass)return;
+  const m=meta(), k=await derive(pass,unb64(m.salt)); const imported=await decrypt({iv:obj.iv,ct:obj.ct},k);
+  DB=imported;await saveVault();refresh();alert('Sauvegarde importée.');
+ }catch(e){alert('Import impossible : code incorrect ou fichier invalide.');}
+}
+async function resetData(){if(confirm('Effacer toutes les données PulseTrack de cet iPhone ? Cette action est irréversible.')){DB=[];await saveVault();refresh()}}
+window.addEventListener('resize',refresh);
+</script>
+</body>
+</html>

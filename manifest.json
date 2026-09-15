@@ -1,11 +1,11 @@
 {
   "name": "PulseTrack",
   "short_name": "PulseTrack",
-  "start_url": ".",
+  "start_url": "/pulsetrack/",
+  "scope": "/pulsetrack/",
   "display": "standalone",
   "background_color": "#0b0f14",
   "theme_color": "#0b0f14",
-  "lang": "fr",
   "icons": [
     {
       "src": "icon-192.png",
